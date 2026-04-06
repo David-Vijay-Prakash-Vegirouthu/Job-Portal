@@ -1,0 +1,874 @@
+/* ===== Dashboard.css — fully self-contained ===== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0e1a;
+  color: #eef0f8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Shell ── */
+.dash {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0a0e1a;
+}
+
+/* ════════════ TOPBAR ════════════ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: rgba(10, 14, 26, 0.9);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #4f6ef7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 12px rgba(79,110,247,0.45);
+  flex-shrink: 0;
+}
+
+.topbar-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #eef0f8;
+  letter-spacing: -0.02em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar-label {
+  font-size: 0.8rem;
+  color: #3a4060;
+}
+
+/* ── Logout button — clearly styled ── */
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(242,92,122,0.35);
+  background: rgba(242,92,122,0.1);
+  color: #f25c7a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.btn-logout:hover {
+  background: rgba(242,92,122,0.2);
+  border-color: rgba(242,92,122,0.6);
+  transform: translateY(-1px);
+}
+
+/* ════════════ BODY GRID ════════════ */
+.dash-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  padding: 28px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ════════════ FORM PANEL ════════════ */
+.form-panel {
+  background: #131929;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 18px;
+  padding: 26px 24px 24px;
+  position: sticky;
+  top: 88px;
+  height: fit-content;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  overflow: hidden;
+  position: relative;
+}
+
+.form-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4f6ef7, #06d6a0);
+}
+
+.fp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.fp-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #eef0f8;
+  letter-spacing: -0.01em;
+}
+
+.fp-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.fp-badge.new {
+  background: rgba(79,110,247,0.15);
+  color: #7d96ff;
+  border: 1px solid rgba(79,110,247,0.3);
+}
+
+.fp-badge.editing {
+  background: rgba(247,169,79,0.12);
+  color: #f7a94f;
+  border: 1px solid rgba(247,169,79,0.3);
+}
+
+/* form fields */
+.fg {
+  margin-bottom: 16px;
+}
+
+.fg label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8892b0;
+  margin-bottom: 7px;
+}
+
+.fg input {
+  display: block;
+  width: 100%;
+  background: #0e1525;
+  border: 1.5px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 0.9rem;
+  color: #eef0f8;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.fg input::placeholder { color: #3a4060; }
+
+.fg input:focus {
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 4px rgba(79,110,247,0.12);
+  background: #111827;
+}
+/* form fields */
+.fg {
+  margin-bottom: 16px;
+}
+
+.fg textarea {
+  display: block;
+  width: 100%;
+  background: #0e1525;
+  border: 1.5px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 0.9rem;
+  color: #eef0f8;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 90px;
+  resize: none;
+}
+
+.fg textarea::placeholder {
+  color: #3a4060;
+}
+
+.fg textarea:focus {
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 4px rgba(79,110,247,0.12);
+  background: #111827;
+}
+
+/* ── Add button ── */
+.btn-add {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 8px;
+  background: #4f6ef7;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 18px rgba(79,110,247,0.45);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-add:hover {
+  background: #3a57e8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(79,110,247,0.6);
+}
+
+.btn-add:active { transform: translateY(0); }
+
+/* ── Update button ── */
+.btn-update {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 8px;
+  background: #f7a94f;
+  color: #0a0e1a;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 18px rgba(247,169,79,0.35);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-update:hover {
+  background: #e8941a;
+  transform: translateY(-2px);
+}
+
+.btn-update:active { transform: translateY(0); }
+
+/* ── Cancel button ── */
+.btn-cancel {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1.5px solid rgba(255,255,255,0.09);
+  border-radius: 8px;
+  background: transparent;
+  color: #8892b0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.15);
+  color: #eef0f8;
+}
+
+/* ════════════ JOBS PANEL ════════════ */
+.jobs-panel {
+  min-width: 0;
+}
+
+/* Stats */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: #131929;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.stat-card:hover {
+  border-color: rgba(79,110,247,0.3);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-icon.blue { background: rgba(79,110,247,0.15); }
+.stat-icon.teal { background: rgba(6,214,160,0.12); }
+
+.stat-val {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #eef0f8;
+  line-height: 1;
+  font-family: 'Consolas', monospace;
+}
+
+.stat-lbl {
+  font-size: 0.7rem;
+  color: #8892b0;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Jobs list header */
+.jobs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.jobs-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #eef0f8;
+  letter-spacing: -0.02em;
+}
+
+.jobs-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7d96ff;
+  background: rgba(79,110,247,0.12);
+  border: 1px solid rgba(79,110,247,0.25);
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-family: 'Consolas', monospace;
+}
+
+/* Cards grid */
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* Single job card */
+.job-card {
+  background: #131929;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  animation: cardIn 0.3s ease both;
+}
+
+/* colored left accent bar */
+.job-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #4f6ef7, #06d6a0);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.job-card:hover {
+  border-color: rgba(79,110,247,0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(79,110,247,0.1);
+}
+
+.job-card:hover::before { opacity: 1; }
+
+.job-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #eef0f8;
+  line-height: 1.3;
+}
+
+.job-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.83rem;
+  color: #8892b0;
+}
+.meta-row span:last-child {
+  word-break: break-word;
+}
+
+/* action buttons row */
+.job-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── Edit button — blue, visible ── */
+.btn-edit {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  background: rgba(79,110,247,0.14);
+  border: 1.5px solid rgba(79,110,247,0.3);
+  color: #7d96ff;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.btn-edit:hover {
+  background: rgba(79,110,247,0.25);
+  border-color: rgba(79,110,247,0.55);
+  transform: translateY(-1px);
+}
+
+/* ── Delete button — red, visible ── */
+.btn-delete {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  background: rgba(242,92,122,0.1);
+  border: 1.5px solid rgba(242,92,122,0.3);
+  color: #f25c7a;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.btn-delete:hover {
+  background: rgba(242,92,122,0.22);
+  border-color: rgba(242,92,122,0.55);
+  transform: translateY(-1px);
+}
+
+/* Empty state */
+.jobs-empty {
+  grid-column: 1 / -1;
+  padding: 72px 32px;
+  text-align: center;
+  border: 1.5px dashed rgba(255,255,255,0.07);
+  border-radius: 16px;
+}
+
+.jobs-empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.jobs-empty-text {
+  font-size: 0.9rem;
+  color: #3a4060;
+  line-height: 1.7;
+}
+
+/* ════════════ ANIMATIONS ════════════ */
+@keyframes cardIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ════════════ RESPONSIVE ════════════ */
+@media (max-width: 900px) {
+  .dash-body {
+    grid-template-columns: 1fr;
+    padding: 20px 16px;
+  }
+  .form-panel { position: static; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 500px) {
+  .topbar { padding: 0 14px; }
+  .topbar-label { display: none; }
+  .jobs-grid { grid-template-columns: 1fr; }
+}
+/* ===== Dashboard.css — ADDITIONS for multi-user ownership ===== */
+/* Append these rules to the bottom of your existing Dashboard.css */
+
+/* ── Owned card: indigo border accent matching the existing blue palette ── */
+.job-card--owned {
+  border-color: rgba(79, 110, 247, 0.45);
+  background: #141b2e;
+}
+
+.job-card--owned::before {
+  background: linear-gradient(180deg, #4f6ef7, #7d96ff);
+  opacity: 1;
+}
+
+/* ── "✦ Your Posting" badge ── */
+.owner-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(79, 110, 247, 0.15);
+  border: 1px solid rgba(79, 110, 247, 0.35);
+  color: #7d96ff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Apply button — sky blue, consistent with btn-edit / btn-delete style ── */
+.btn-apply {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  background: rgba(6, 214, 160, 0.1);
+  border: 1.5px solid rgba(6, 214, 160, 0.3);
+  color: #06d6a0;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.btn-apply:hover {
+  background: rgba(6, 214, 160, 0.22);
+  border-color: rgba(6, 214, 160, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ── topbar-label now shows username — bump it visible on mid screens ── */
+@media (max-width: 700px) {
+  .topbar-label { display: none; }
+}
+/* ===== Dashboard.css — ADDITIONS for multi-user ownership + applications ===== */
+/* Append these rules to the bottom of your existing Dashboard.css             */
+
+/* ── Owned card ── */
+.job-card--owned {
+  border-color: rgba(79, 110, 247, 0.45);
+  background: #141b2e;
+}
+.job-card--owned::before {
+  background: linear-gradient(180deg, #4f6ef7, #7d96ff);
+  opacity: 1;
+}
+
+/* ── "✦ Your Posting" badge ── */
+.owner-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(79, 110, 247, 0.15);
+  border: 1px solid rgba(79, 110, 247, 0.35);
+  color: #7d96ff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Apply button (non-owner) ── */
+.btn-apply {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  background: rgba(6, 214, 160, 0.1);
+  border: 1.5px solid rgba(6, 214, 160, 0.3);
+  color: #06d6a0;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.btn-apply:hover {
+  background: rgba(6, 214, 160, 0.22);
+  border-color: rgba(6, 214, 160, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ── Applicants button (owner) ── */
+.btn-applicants {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  background: rgba(247, 169, 79, 0.1);
+  border: 1.5px solid rgba(247, 169, 79, 0.3);
+  color: #f7a94f;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.btn-applicants:hover {
+  background: rgba(247, 169, 79, 0.22);
+  border-color: rgba(247, 169, 79, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ════════════ MODAL OVERLAY ════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+.modal-box {
+  background: #131929;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 28px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  animation: modalIn 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* wider variant for applicants list */
+.modal-box--wide {
+  max-width: 600px;
+}
+
+.modal-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4f6ef7, #06d6a0);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #eef0f8;
+  letter-spacing: -0.01em;
+}
+
+.modal-sub {
+  font-size: 0.78rem;
+  color: #8892b0;
+  margin-top: 4px;
+}
+
+.modal-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #8892b0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+.modal-close:hover {
+  background: rgba(242, 92, 122, 0.15);
+  border-color: rgba(242, 92, 122, 0.4);
+  color: #f25c7a;
+}
+
+/* Applicant read-only info row */
+.modal-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: #0e1525;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.modal-info-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8892b0;
+  margin-bottom: 4px;
+}
+
+.modal-info-value {
+  display: block;
+  font-size: 0.88rem;
+  color: #eef0f8;
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn-cancel { flex: 1; margin-top: 0; }
+.modal-actions .btn-add    { flex: 2; margin-top: 0; }
+
+/* ════════════ APPLICANTS LIST ════════════ */
+.applicants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.applicants-list::-webkit-scrollbar { width: 4px; }
+.applicants-list::-webkit-scrollbar-track { background: transparent; }
+.applicants-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+.applicant-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #0e1525;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+.applicant-card:hover {
+  border-color: rgba(79,110,247,0.3);
+}
+
+.applicant-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f6ef7, #06d6a0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.applicant-info { flex: 1; min-width: 0; }
+
+.applicant-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #eef0f8;
+  margin-bottom: 3px;
+}
+
+.applicant-email {
+  font-size: 0.82rem;
+  color: #7d96ff;
+  margin-bottom: 6px;
+}
+.applicant-email a {
+  color: #7d96ff;
+  text-decoration: none;
+}
+.applicant-email a:hover {
+  text-decoration: underline;
+}
+
+.applicant-message {
+  font-size: 0.82rem;
+  color: #8892b0;
+  font-style: italic;
+  margin-bottom: 6px;
+  line-height: 1.5;
+  border-left: 2px solid rgba(79,110,247,0.4);
+  padding-left: 8px;
+}
+
+.applicant-time {
+  font-size: 0.7rem;
+  color: #3a4060;
+}
+
+.applicants-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #3a4060;
+  font-size: 0.9rem;
+}
