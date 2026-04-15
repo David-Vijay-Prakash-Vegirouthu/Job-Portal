@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
 
-const RAW_API_BASE = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : window.location.origin);
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+// Always read from REACT_APP_API_URL (set in Render env vars at build time)
+const API_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 async function parseApiResponse(response) {
   const raw = await response.text();
@@ -23,18 +23,22 @@ function Register() {
   const navigate = useNavigate();
 
   const handleRegister = async () => {
-    const response = await fetch(`${API_BASE}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-    const { ok, status, data, raw } = await parseApiResponse(response);
-    if (!ok) {
-      alert(data?.message || data?.error || raw || `Register failed with status ${status}`);
-      return;
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const { ok, status, data, raw } = await parseApiResponse(response);
+      if (!ok) {
+        alert(data?.message || data?.error || raw || `Register failed with status ${status}`);
+        return;
+      }
+      alert("Account created successfully!");
+      navigate("/");
+    } catch (e) {
+      alert("Network error: " + e.message);
     }
-    alert("Account created successfully!");
-    navigate("/");
   };
 
   return (

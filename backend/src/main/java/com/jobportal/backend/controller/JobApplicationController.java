@@ -7,6 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +21,10 @@ public class JobApplicationController {
     @Autowired
     private JobApplicationRepository applicationRepository;
 
+    // Absolute path inside Docker container (WORKDIR is /app)
+    private static final String UPLOAD_DIR = "/app/uploads/";
+
     // ── Apply to a job ───────────────────────────────────────────────────────
-    // Body: { jobId, applicantId, applicantName, applicantEmail, message }
     @PostMapping
     public ResponseEntity<?> apply(
             @RequestParam Long jobId,
@@ -37,34 +42,37 @@ public class JobApplicationController {
                 return ResponseEntity.status(409).body(err);
             }
 
-            // ✅ Allow only PDF
-            if (!resume.getContentType().equals("application/pdf")) {
-                return ResponseEntity.badRequest().body("Only PDF files allowed");
+            // Allow only PDF
+            String contentType = resume.getContentType();
+            if (contentType == null || !contentType.equals("application/pdf")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Only PDF files are allowed.");
+                return ResponseEntity.badRequest().body(err);
             }
 
-            // ✅ Save file
-            String uploadDir = "uploads/";
+            // Save file to /app/uploads/ inside the container
             String fileName = System.currentTimeMillis() + "_" + resume.getOriginalFilename();
+            Path filePath = Paths.get(UPLOAD_DIR, fileName);
+            Files.createDirectories(filePath.getParent());
+            Files.write(filePath, resume.getBytes());
 
-            java.nio.file.Path filePath = java.nio.file.Paths.get(uploadDir, fileName);
-            java.nio.file.Files.createDirectories(filePath.getParent());
-            java.nio.file.Files.write(filePath, resume.getBytes());
-
-            // ✅ Save to DB
+            // Save application record to DB
             JobApplication application = new JobApplication();
             application.setJobId(jobId);
             application.setApplicantId(applicantId);
             application.setApplicantName(applicantName);
             application.setApplicantEmail(applicantEmail);
             application.setMessage(message);
-            application.setResumePath(fileName); // store only filename
+            application.setResumePath(fileName);
 
             JobApplication saved = applicationRepository.save(application);
 
             return ResponseEntity.ok(saved);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error uploading file: " + e.getMessage());
+            Map<String, String> err = new HashMap<>();
+            err.put("error", "Error uploading file: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(err);
         }
     }
 

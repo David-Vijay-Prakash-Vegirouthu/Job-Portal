@@ -1,25 +1,41 @@
-# Use Eclipse Temurin OpenJDK 21 as the base image
-FROM eclipse-temurin:21
+# ═══════════════════════════════════════════════════════════════
+#  Stage 1 — BUILD
+#  Use a full JDK image to compile the Spring Boot app with Maven
+# ═══════════════════════════════════════════════════════════════
+FROM eclipse-temurin:21-jdk AS build
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+# Copy Maven wrapper and pom first (layer-cache: only re-downloads deps if pom changes)
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
 
-# Download dependencies (this layer will be cached if pom.xml doesn't change)
-RUN ./mvnw dependency:go-offline
+# Fix Windows CRLF line endings so mvnw runs on Linux
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
-# Copy the source code
+# Download dependencies (cached layer)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source and build
 COPY src ./src
+RUN ./mvnw clean package -DskipTests -B
 
-# Build the application and move the JAR
-RUN ./mvnw clean package -DskipTests && mv target/*.jar app.jar
+# ═══════════════════════════════════════════════════════════════
+#  Stage 2 — RUN
+#  Use a slim JRE-only image for the final container (smaller size)
+# ═══════════════════════════════════════════════════════════════
+FROM eclipse-temurin:21-jre
 
-# Expose the port the app runs on
+WORKDIR /app
+
+# Create uploads directory (for resume PDFs)
+RUN mkdir -p /app/uploads
+
+# Copy only the built JAR from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Render injects $PORT — expose 8080 as default
 EXPOSE 8080
 
 # Run the application
-CMD ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "app.jar"]

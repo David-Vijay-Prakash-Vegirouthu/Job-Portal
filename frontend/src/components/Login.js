@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
-const RAW_API_BASE = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : window.location.origin);
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+// Always read from REACT_APP_API_URL (set in Render env vars at build time)
+const API_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 async function parseApiResponse(response) {
   const raw = await response.text();
@@ -22,36 +22,31 @@ function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const response = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const { ok, status, data, raw } = await parseApiResponse(response);
+      const { ok, status, data, raw } = await parseApiResponse(response);
 
-    if (!ok) {
-      const message = data?.message || data?.error || raw || `Login failed with status ${status}`;
-      alert(message);
-      return;
-    }
+      if (!ok) {
+        const message = data?.message || data?.error || raw || `Login failed with status ${status}`;
+        alert(message);
+        return;
+      }
 
-    if (data?.message === "Login Successful") {
-      localStorage.setItem("userId", data.userId);
-      localStorage.setItem("userName", data.name);
-      localStorage.setItem("userEmail", email);
-      navigate("/dashboard");
-    } else {
-      alert(data?.message || "Login failed");
-    }
-
-    if (data.message === "Login Successful") {
-      localStorage.setItem("userId",    data.userId);
-      localStorage.setItem("userName",  data.name);
-      localStorage.setItem("userEmail", email);   // save email for apply modal
-      navigate("/dashboard");
-    } else {
-      alert(data.message);
+      if (data?.message === "Login Successful") {
+        localStorage.setItem("userId",    data.userId);
+        localStorage.setItem("userName",  data.name);
+        localStorage.setItem("userEmail", email);
+        navigate("/dashboard");
+      } else {
+        alert(data?.message || "Login failed");
+      }
+    } catch (e) {
+      alert("Network error: " + e.message);
     }
   };
 
