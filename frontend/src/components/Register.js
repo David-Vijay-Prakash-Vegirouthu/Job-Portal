@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
 
-const API_BASE = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : window.location.origin);
+const RAW_API_BASE = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : window.location.origin);
+const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 
 async function parseApiResponse(response) {
   const raw = await response.text();
