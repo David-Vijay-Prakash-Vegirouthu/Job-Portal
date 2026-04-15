@@ -2,7 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const API_BASE = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : window.location.origin);
+
+async function parseApiResponse(response) {
+  const raw = await response.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
+  return { ok: response.ok, status: response.status, data, raw };
+}
 
 function Login() {
   const [email, setEmail]       = useState("");
@@ -16,7 +27,22 @@ function Login() {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
+    const { ok, status, data, raw } = await parseApiResponse(response);
+
+    if (!ok) {
+      const message = data?.message || data?.error || raw || `Login failed with status ${status}`;
+      alert(message);
+      return;
+    }
+
+    if (data?.message === "Login Successful") {
+      localStorage.setItem("userId", data.userId);
+      localStorage.setItem("userName", data.name);
+      localStorage.setItem("userEmail", email);
+      navigate("/dashboard");
+    } else {
+      alert(data?.message || "Login failed");
+    }
 
     if (data.message === "Login Successful") {
       localStorage.setItem("userId",    data.userId);

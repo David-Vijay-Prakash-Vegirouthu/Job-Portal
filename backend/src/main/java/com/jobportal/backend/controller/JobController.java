@@ -11,7 +11,7 @@ import java.util.HashMap;
 import com.jobportal.backend.model.Job;
 import com.jobportal.backend.repository.JobRepository;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
@@ -48,7 +48,7 @@ public class JobController {
             }
 
             boolean isLegacy = (job.getUserId() == null);
-            boolean isOwner  = (userId != null && userId.equals(job.getUserId()));
+            boolean isOwner = (userId != null && userId.equals(job.getUserId()));
 
             if (!isLegacy && !isOwner) {
                 return ResponseEntity.status(403).body(errorMap("You are not authorised to edit this job"));
@@ -84,7 +84,7 @@ public class JobController {
             }
 
             boolean isLegacy = (job.getUserId() == null);
-            boolean isOwner  = (userId != null && userId.equals(job.getUserId()));
+            boolean isOwner = (userId != null && userId.equals(job.getUserId()));
 
             if (!isLegacy && !isOwner) {
                 return ResponseEntity.status(403).body(errorMap("You are not authorised to delete this job"));

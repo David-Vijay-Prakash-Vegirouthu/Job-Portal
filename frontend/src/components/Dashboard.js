@@ -2,7 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const API_BASE = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : window.location.origin);
+
+async function parseApiResponse(response) {
+  const raw = await response.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
+  return { ok: response.ok, status: response.status, data, raw };
+}
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -30,10 +41,14 @@ function Dashboard() {
   const [resumeFile, setResumeFile] = useState(null);
   
   // ── Data fetching ──────────────────────────────────────────────────────────
-  const fetchJobs = () => {
-    fetch(`${API_BASE}/api/jobs`)
-      .then((r) => r.json())
-      .then((data) => setJobs(data));
+  const fetchJobs = async () => {
+    const response = await fetch(`${API_BASE}/api/jobs`);
+    const { ok, data, raw } = await parseApiResponse(response);
+    if (!ok) {
+      console.error("Failed to fetch jobs:", raw);
+      return;
+    }
+    setJobs(data || []);
   };
 
   useEffect(() => {
@@ -120,7 +135,7 @@ function Dashboard() {
       body: formData
     });
 
-    const data = await res.json();
+    const { ok, status, data, raw } = await parseApiResponse(res);
 
     if (res.status === 409) {
       alert("You have already applied for this job!");
@@ -145,8 +160,12 @@ function Dashboard() {
     setApplicantsLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/applications/job/${job.id}`);
-      const data = await res.json();
-      setApplicants(data);
+      const { ok, data, raw } = await parseApiResponse(res);
+      if (!ok) {
+        alert(data?.message || data?.error || raw || "Failed to load applicants");
+      } else {
+        setApplicants(data || []);
+      }
     } catch (e) {
       alert("Failed to load applicants: " + e.message);
     } finally {
