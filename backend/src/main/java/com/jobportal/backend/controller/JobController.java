@@ -11,7 +11,6 @@ import java.util.HashMap;
 import com.jobportal.backend.model.Job;
 import com.jobportal.backend.repository.JobRepository;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
