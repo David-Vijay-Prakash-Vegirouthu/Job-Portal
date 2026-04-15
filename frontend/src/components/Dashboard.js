@@ -31,7 +31,7 @@ function Dashboard() {
   
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchJobs = () => {
-    fetch("${API_BASE}/api/jobs")
+    fetch(`${API_BASE}/api/jobs`)
       .then((r) => r.json())
       .then((data) => setJobs(data));
   };
@@ -81,7 +81,7 @@ function Dashboard() {
       );
       if (res.status === 403) { alert("Not authorised to edit this job."); resetForm(); return; }
     } else {
-      await fetch("${API_BASE}/api/jobs", {
+      await fetch(`${API_BASE}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...job, userId: currentUserId }),
@@ -115,7 +115,7 @@ function Dashboard() {
     formData.append("message", applyMessage);
     formData.append("resume", resumeFile);
 
-    const res = await fetch("${API_BASE}/api/applications", {
+    const res = await fetch(`${API_BASE}/api/applications`, {
       method: "POST",
       body: formData
     });
