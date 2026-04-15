@@ -13,4 +13,9 @@ public class TestController {
     public String testApi() {
         return "Backend is working!";
     }
+
+    @GetMapping("/")
+    public String healthCheck() {
+        return "API is healthy and running!";
+    }
 }

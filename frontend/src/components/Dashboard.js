@@ -432,7 +432,7 @@ function Dashboard() {
                 {/* ✅ NEW: VIEW RESUME */}
                 <div style={{ marginTop: "5px" }}>
                   <a
-                    href={`${API_BASE}/${a.resumePath}`}
+                    href={`${API_BASE}/uploads/${a.resumePath}`}
                     target="_blank"
                     rel="noreferrer"
                   >
