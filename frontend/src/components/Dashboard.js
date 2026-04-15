@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
 function Dashboard() {
   const navigate = useNavigate();
 
@@ -29,7 +31,7 @@ function Dashboard() {
   
   // ── Data fetching ──────────────────────────────────────────────────────────
   const fetchJobs = () => {
-    fetch("http://localhost:8080/api/jobs")
+    fetch("${API_BASE}/api/jobs")
       .then((r) => r.json())
       .then((data) => setJobs(data));
   };
@@ -55,7 +57,7 @@ function Dashboard() {
     if (!window.confirm("Delete this job posting?")) return;
     try {
       const res = await fetch(
-        `http://localhost:8080/api/jobs/${id}?userId=${currentUserId}`,
+        `${API_BASE}/api/jobs/${id}?userId=${currentUserId}`,
         { method: "DELETE" }
       );
       if (!res.ok) {
@@ -74,12 +76,12 @@ function Dashboard() {
     const job = { title, company, location, description };
     if (editId) {
       const res = await fetch(
-        `http://localhost:8080/api/jobs/${editId}?userId=${currentUserId}`,
+        `${API_BASE}/api/jobs/${editId}?userId=${currentUserId}`,
         { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(job) }
       );
       if (res.status === 403) { alert("Not authorised to edit this job."); resetForm(); return; }
     } else {
-      await fetch("http://localhost:8080/api/jobs", {
+      await fetch("${API_BASE}/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...job, userId: currentUserId }),
@@ -113,7 +115,7 @@ function Dashboard() {
     formData.append("message", applyMessage);
     formData.append("resume", resumeFile);
 
-    const res = await fetch("http://localhost:8080/api/applications", {
+    const res = await fetch("${API_BASE}/api/applications", {
       method: "POST",
       body: formData
     });
@@ -142,7 +144,7 @@ function Dashboard() {
     setViewApplicantsJob(job);
     setApplicantsLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/applications/job/${job.id}`);
+      const res = await fetch(`${API_BASE}/api/applications/job/${job.id}`);
       const data = await res.json();
       setApplicants(data);
     } catch (e) {
@@ -410,7 +412,7 @@ function Dashboard() {
                 {/* ✅ NEW: VIEW RESUME */}
                 <div style={{ marginTop: "5px" }}>
                   <a
-                    href={`http://localhost:8080/${a.resumePath}`}
+                    href={`${API_BASE}/${a.resumePath}`}
                     target="_blank"
                     rel="noreferrer"
                   >
