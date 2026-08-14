@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../services/api";
 import "./Login.css";
-
-// Always read from REACT_APP_API_URL (set in Render env vars at build time)
-const API_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 async function parseApiResponse(response) {
   const raw = await response.text();
@@ -19,14 +17,21 @@ async function parseApiResponse(response) {
 function Login() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading]   = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const { ok, status, data, raw } = await parseApiResponse(response);
@@ -40,13 +45,21 @@ function Login() {
       if (data?.message === "Login Successful") {
         localStorage.setItem("userId",    data.userId);
         localStorage.setItem("userName",  data.name);
-        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userEmail", email.trim());
         navigate("/dashboard");
       } else {
         alert(data?.message || "Login failed");
       }
     } catch (e) {
       alert("Network error: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
     }
   };
 
@@ -59,16 +72,30 @@ function Login() {
           <span className="auth-logo-tag">Find · Post · Hire</span>
         </div>
         <h2 className="auth-heading">Welcome back</h2>
-        <p className="auth-sub">Sign in to manage your job listings</p>
+        <p className="auth-sub">Sign in to manage your job listings and applications</p>
         <div className="fg">
           <label>Email Address</label>
-          <input type="email" placeholder="you@example.com" onChange={(e) => setEmail(e.target.value)} />
+          <input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
         <div className="fg">
           <label>Password</label>
-          <input type="password" placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} />
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
-        <button className="btn-primary" onClick={handleLogin}>Sign In →</button>
+        <button className="btn-primary" onClick={handleLogin} disabled={loading}>
+          {loading ? "Signing in..." : "Sign In →"}
+        </button>
         <div className="auth-sep">or</div>
         <div className="auth-footer">
           <span>Don't have an account?</span>

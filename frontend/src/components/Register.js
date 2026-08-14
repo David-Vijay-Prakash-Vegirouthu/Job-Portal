@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../services/api";
 import "./Register.css";
-
-// Always read from REACT_APP_API_URL (set in Render env vars at build time)
-const API_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 async function parseApiResponse(response) {
   const raw = await response.text();
@@ -20,24 +18,40 @@ function Register() {
   const [name, setName]         = useState("");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading]   = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async () => {
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      alert("Please fill in all fields (Full Name, Email, Password).");
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
       });
+
       const { ok, status, data, raw } = await parseApiResponse(response);
       if (!ok) {
-        alert(data?.message || data?.error || raw || `Register failed with status ${status}`);
+        alert(data?.message || data?.error || raw || `Registration failed with status ${status}`);
         return;
       }
-      alert("Account created successfully!");
+      alert("Account created successfully! Please sign in.");
       navigate("/");
     } catch (e) {
       alert("Network error: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleRegister();
     }
   };
 
@@ -54,14 +68,16 @@ function Register() {
         <div className="new-badge">✦ New Account</div>
 
         <h2 className="auth-heading">Create account</h2>
-        <p className="auth-sub">Start posting and managing jobs today</p>
+        <p className="auth-sub">Start posting jobs or applying for opportunities today</p>
 
         <div className="fg">
           <label>Full Name</label>
           <input
             type="text"
             placeholder="John Doe"
+            value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
 
@@ -70,7 +86,9 @@ function Register() {
           <input
             type="email"
             placeholder="you@example.com"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
 
@@ -79,18 +97,15 @@ function Register() {
           <input
             type="password"
             placeholder="Create a strong password"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
 
-        <button className="btn-primary" onClick={handleRegister}>
-          Create Account →
+        <button className="btn-primary" onClick={handleRegister} disabled={loading}>
+          {loading ? "Creating account..." : "Create Account →"}
         </button>
-
-        <p className="auth-terms">
-          By registering you agree to our{" "}
-          <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
-        </p>
 
         <div className="auth-sep">or</div>
 

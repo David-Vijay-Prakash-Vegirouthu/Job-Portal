@@ -20,12 +20,30 @@ public class AuthController {
     // Register: save user and return their ID + name
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@RequestBody User user) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            response.put("error", "Email is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            response.put("error", "Password is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        User existing = userRepository.findByEmail(user.getEmail().trim());
+        if (existing != null) {
+            response.put("error", "Email is already registered");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        user.setEmail(user.getEmail().trim());
         User saved = userRepository.save(user);
 
-        Map<String, Object> response = new HashMap<>();
         response.put("id", saved.getId());
         response.put("name", saved.getName());
         response.put("email", saved.getEmail());
+        response.put("message", "Account created successfully");
 
         return ResponseEntity.ok(response);
     }

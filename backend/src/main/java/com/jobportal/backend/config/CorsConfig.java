@@ -22,10 +22,14 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow the deployed frontend + local dev
-        config.setAllowedOrigins(List.of(
-            frontendUrl.replace("/+$", ""), // from FRONTEND_URL env var (Render)
-            "http://localhost:3000"          // local development
+        // Allow the deployed frontend + local dev origins
+        config.setAllowedOriginPatterns(List.of(
+            "*",
+            frontendUrl.replaceAll("/+$", ""),
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000"
         ));
 
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

@@ -21,8 +21,16 @@ public class JobApplicationController {
     @Autowired
     private JobApplicationRepository applicationRepository;
 
-    // Absolute path inside Docker container (WORKDIR is /app)
-    private static final String UPLOAD_DIR = "/app/uploads/";
+    // Dynamically resolve upload directory in relative working dir 'uploads/'
+    private String getUploadDir() {
+        Path uploadPath = Paths.get("uploads").toAbsolutePath();
+        try {
+            Files.createDirectories(uploadPath);
+        } catch (Exception e) {
+            // fallback
+        }
+        return uploadPath.toString();
+    }
 
     // ── Apply to a job ───────────────────────────────────────────────────────
     @PostMapping
@@ -44,15 +52,18 @@ public class JobApplicationController {
 
             // Allow only PDF
             String contentType = resume.getContentType();
-            if (contentType == null || !contentType.equals("application/pdf")) {
+            String originalFilename = resume.getOriginalFilename();
+            boolean isPdf = (contentType != null && contentType.equals("application/pdf")) ||
+                            (originalFilename != null && originalFilename.toLowerCase().endsWith(".pdf"));
+            if (!isPdf) {
                 Map<String, String> err = new HashMap<>();
                 err.put("error", "Only PDF files are allowed.");
                 return ResponseEntity.badRequest().body(err);
             }
 
-            // Save file to /app/uploads/ inside the container
-            String fileName = System.currentTimeMillis() + "_" + resume.getOriginalFilename();
-            Path filePath = Paths.get(UPLOAD_DIR, fileName);
+            // Save file to uploads/ directory
+            String fileName = System.currentTimeMillis() + "_" + (originalFilename != null ? originalFilename : "resume.pdf");
+            Path filePath = Paths.get(getUploadDir(), fileName);
             Files.createDirectories(filePath.getParent());
             Files.write(filePath, resume.getBytes());
 
@@ -81,5 +92,12 @@ public class JobApplicationController {
     public ResponseEntity<List<JobApplication>> getApplicants(@PathVariable Long jobId) {
         List<JobApplication> applicants = applicationRepository.findByJobId(jobId);
         return ResponseEntity.ok(applicants);
+    }
+
+    // ── Get all applications submitted by a specific user (applicant view) ──
+    @GetMapping("/user/{applicantId}")
+    public ResponseEntity<List<JobApplication>> getUserApplications(@PathVariable Long applicantId) {
+        List<JobApplication> applications = applicationRepository.findByApplicantId(applicantId);
+        return ResponseEntity.ok(applications);
     }
 }

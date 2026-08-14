@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../services/api";
 import "./Dashboard.css";
-
-// Always read from REACT_APP_API_URL (set in Render env vars at build time)
-const API_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 async function parseApiResponse(response) {
   const raw = await response.text();
@@ -23,6 +21,7 @@ function Dashboard() {
   const currentUserName = localStorage.getItem("userName") || "User";
   const currentEmail    = localStorage.getItem("userEmail") || "";
 
+  // ── Form State ─────────────────────────────────────────────────────────────
   const [title, setTitle]           = useState("");
   const [company, setCompany]       = useState("");
   const [location, setLocation]     = useState("");
@@ -30,18 +29,27 @@ function Dashboard() {
   const [jobs, setJobs]             = useState([]);
   const [editId, setEditId]         = useState(null);
 
-  // ── Apply modal state ──────────────────────────────────────────────────────
-  const [applyJob, setApplyJob]       = useState(null);
+  // ── Search & Filter State ──────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [activeTab, setActiveTab]           = useState("all"); // 'all' | 'my-jobs' | 'my-applications'
+
+  // ── User Applications State (Job Seeker View) ──────────────────────────────
+  const [userApplications, setUserApplications]       = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+
+  // ── Apply Modal State ──────────────────────────────────────────────────────
+  const [applyJob, setApplyJob]         = useState(null);
   const [applyMessage, setApplyMessage] = useState("");
   const [applyLoading, setApplyLoading] = useState(false);
+  const [resumeFile, setResumeFile]     = useState(null);
 
-  // ── Applicants panel state (for job owners) ────────────────────────────────
+  // ── Applicants Panel State (Employer View) ─────────────────────────────────
   const [viewApplicantsJob, setViewApplicantsJob] = useState(null);
   const [applicants, setApplicants]               = useState([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
-  const [resumeFile, setResumeFile] = useState(null);
 
-  // ── Data fetching ──────────────────────────────────────────────────────────
+  // ── Data Fetching ──────────────────────────────────────────────────────────
   const fetchJobs = async () => {
     try {
       const response = await fetch(`${API_BASE}/api/jobs`);
@@ -56,23 +64,43 @@ function Dashboard() {
     }
   };
 
+  const fetchUserApplications = async () => {
+    if (!currentUserId) return;
+    setApplicationsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/applications/user/${currentUserId}`);
+      const { ok, data } = await parseApiResponse(res);
+      if (ok) {
+        setUserApplications(data || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch user applications:", e.message);
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!currentUserId) { navigate("/"); return; }
     fetchJobs();
-  }, []);
+    fetchUserApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
 
-  // ── Form helpers ───────────────────────────────────────────────────────────
+  // ── Form Helpers ───────────────────────────────────────────────────────────
   const resetForm = () => {
     setTitle(""); setCompany(""); setLocation(""); setDescription(""); setEditId(null);
   };
 
   const handleEdit = (job) => {
-    setTitle(job.title); setCompany(job.company);
-    setLocation(job.location); setDescription(job.description || "");
+    setTitle(job.title);
+    setCompany(job.company);
+    setLocation(job.location);
+    setDescription(job.description || "");
     setEditId(job.id);
   };
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // ── Delete Job ─────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this job posting?")) return;
     try {
@@ -91,8 +119,12 @@ function Dashboard() {
     }
   };
 
-  // ── Create / Update ────────────────────────────────────────────────────────
+  // ── Create / Update Job ────────────────────────────────────────────────────
   const handleSubmit = async () => {
+    if (!title.trim() || !company.trim() || !location.trim()) {
+      alert("Please fill in Job Title, Company, and Location.");
+      return;
+    }
     const job = { title, company, location, description };
     try {
       if (editId) {
@@ -108,23 +140,25 @@ function Dashboard() {
           body: JSON.stringify({ ...job, userId: currentUserId }),
         });
       }
-      resetForm(); fetchJobs();
+      resetForm();
+      fetchJobs();
     } catch (e) {
       alert("Network error: " + e.message);
     }
   };
 
-  // ── Apply flow ─────────────────────────────────────────────────────────────
+  // ── Apply Flow ─────────────────────────────────────────────────────────────
   const openApplyModal = (job) => {
     setApplyJob(job);
     setApplyMessage("");
+    setResumeFile(null);
   };
 
   const handleApplySubmit = async () => {
     if (!applyJob) return;
 
     if (!resumeFile) {
-      alert("Please upload resume PDF");
+      alert("Please select your resume (PDF format required)");
       return;
     }
 
@@ -152,6 +186,7 @@ function Dashboard() {
         alert(`Successfully applied for "${applyJob.title}" 🎉`);
         setApplyJob(null);
         setResumeFile(null);
+        fetchUserApplications();
       } else {
         alert("Application failed: " + (data?.error || raw || "Unknown error"));
       }
@@ -163,7 +198,7 @@ function Dashboard() {
     }
   };
 
-  // ── View applicants (job owner) ────────────────────────────────────────────
+  // ── View Applicants (Employer View) ────────────────────────────────────────
   const handleViewApplicants = async (job) => {
     setViewApplicantsJob(job);
     setApplicantsLoading(true);
@@ -190,8 +225,24 @@ function Dashboard() {
     navigate("/");
   };
 
+  // ── Computations for Jobs & Filtering ─────────────────────────────────────
   const myJobs = jobs.filter((j) => j.userId === currentUserId);
-  const otherJobs = jobs.filter((j) => j.userId !== currentUserId);
+  
+  const filteredJobs = jobs.filter((j) => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q ||
+      j.title.toLowerCase().includes(q) ||
+      j.company.toLowerCase().includes(q) ||
+      (j.description && j.description.toLowerCase().includes(q));
+
+    const matchesLocation = !locationFilter ||
+      j.location.toLowerCase().includes(locationFilter.toLowerCase());
+
+    return matchesSearch && matchesLocation;
+  });
+
+  // Extract unique locations for filter dropdown
+  const uniqueLocations = Array.from(new Set(jobs.map(j => j.location).filter(Boolean)));
 
   return (
     <div className="dash">
@@ -208,10 +259,10 @@ function Dashboard() {
         </div>
       </header>
 
-      {/* ── Body ── */}
+      {/* ── Body Grid ── */}
       <div className="dash-body">
 
-        {/* ── Sidebar form ── */}
+        {/* ── Sidebar Form ── */}
         <aside>
           <div className="form-panel">
             <div className="fp-header">
@@ -247,9 +298,10 @@ function Dashboard() {
           </div>
         </aside>
 
-        {/* ── Jobs section ── */}
+        {/* ── Main Content Area ── */}
         <section className="jobs-panel">
 
+          {/* Stat Cards */}
           <div className="stats-row">
             <div className="stat-card">
               <div className="stat-icon blue">📋</div>
@@ -265,91 +317,208 @@ function Dashboard() {
                 <div className="stat-lbl">My Postings</div>
               </div>
             </div>
-          </div>
-
-          <div className="jobs-header">
-            <h2 className="jobs-title">All Job Listings</h2>
-            <span className="jobs-count">{jobs.length} jobs</span>
-          </div>
-
-          <div className="jobs-grid">
-            {jobs.length === 0 ? (
-              <div className="jobs-empty">
-                <div className="jobs-empty-icon">📭</div>
-                <p className="jobs-empty-text">No job postings yet.<br />Use the form to add the first listing.</p>
+            <div className="stat-card">
+              <div className="stat-icon blue" style={{ background: "rgba(125,150,255,0.15)", color: "#7d96ff" }}>📄</div>
+              <div>
+                <div className="stat-val">{userApplications.length}</div>
+                <div className="stat-lbl">My Applications</div>
               </div>
-            ) : (
-              otherJobs.map((job) => {
-                const isOwner = job.userId === null || job.userId === currentUserId;
-                return (
-                  <div className={`job-card ${isOwner ? "job-card--owned" : ""}`} key={job.id}>
-                    {isOwner && <span className="owner-badge">✦ Your Posting</span>}
-                    <div className="job-card-title">{job.title}</div>
-                    <div className="job-card-meta">
-                      <div className="meta-row"><span>🏢</span><span>{job.company}</span></div>
-                      <div className="meta-row"><span>📍</span><span>{job.location}</span></div>
-                      {job.description && (
-                        <div className="meta-row"><span>📝</span><span>{job.description}</span></div>
-                      )}
-                    </div>
-                    <div className="job-actions">
-                      {isOwner ? (
-                        <>
-                          <button className="btn-edit" onClick={() => handleEdit(job)}>✎ Edit</button>
-                          <button className="btn-delete" onClick={() => handleDelete(job.id)}>🗑 Delete</button>
-                          <button className="btn-applicants" onClick={() => handleViewApplicants(job)}>
-                            👥 Applicants
-                          </button>
-                        </>
-                      ) : (
-                        <button className="btn-apply" onClick={() => openApplyModal(job)}>
-                          🚀 Apply
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+            </div>
           </div>
 
-          {/* ── My Job Postings Section ── */}
-          <div className="jobs-header" style={{ marginTop: "30px" }}>
-            <h2 className="jobs-title">My Job Postings</h2>
+          {/* Navigation Tabs */}
+          <div className="dash-tabs">
+            <button
+              className={`dash-tab ${activeTab === "all" ? "active" : ""}`}
+              onClick={() => setActiveTab("all")}
+            >
+              All Jobs <span className="tab-badge">{jobs.length}</span>
+            </button>
+            <button
+              className={`dash-tab ${activeTab === "my-jobs" ? "active" : ""}`}
+              onClick={() => setActiveTab("my-jobs")}
+            >
+              My Postings <span className="tab-badge">{myJobs.length}</span>
+            </button>
+            <button
+              className={`dash-tab ${activeTab === "my-applications" ? "active" : ""}`}
+              onClick={() => setActiveTab("my-applications")}
+            >
+              My Applications <span className="tab-badge">{userApplications.length}</span>
+            </button>
           </div>
 
-          <div className="jobs-grid">
-            {myJobs.length === 0 ? (
-              <div className="jobs-empty">
-                <div className="jobs-empty-icon">📭</div>
-                <p className="jobs-empty-text">No jobs posted by you</p>
-              </div>
-            ) : (
-              myJobs.map((job) => (
-                <div className="job-card job-card--owned" key={job.id}>
-                  <span className="owner-badge">✦ Your Posting</span>
-
-                  <div className="job-card-title">{job.title}</div>
-
-                  <div className="job-card-meta">
-                    <div className="meta-row"><span>🏢</span><span>{job.company}</span></div>
-                    <div className="meta-row"><span>📍</span><span>{job.location}</span></div>
-                    {job.description && (
-                      <div className="meta-row"><span>📝</span><span>{job.description}</span></div>
-                    )}
-                  </div>
-
-                  <div className="job-actions">
-                    <button className="btn-edit" onClick={() => handleEdit(job)}>✎ Edit</button>
-                    <button className="btn-delete" onClick={() => handleDelete(job.id)}>🗑 Delete</button>
-                    <button className="btn-applicants" onClick={() => handleViewApplicants(job)}>
-                      👥 Applicants
-                    </button>
-                  </div>
+          {/* ══ TAB 1: ALL JOBS ════════════════════════════════════════════════ */}
+          {activeTab === "all" && (
+            <>
+              {/* Search & Location Filter Bar */}
+              <div className="search-filter-bar">
+                <div className="search-input-wrap">
+                  <span className="search-icon">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search jobs by title, company, or keyword..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-              ))
-            )}
-          </div>
+                <select
+                  className="filter-select"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                >
+                  <option value="">All Locations</option>
+                  {uniqueLocations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+                {(searchQuery || locationFilter) && (
+                  <button
+                    className="btn-clear-filter"
+                    onClick={() => { setSearchQuery(""); setLocationFilter(""); }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+
+              <div className="jobs-header">
+                <h2 className="jobs-title">Available Opportunities</h2>
+                <span className="jobs-count">{filteredJobs.length} results</span>
+              </div>
+
+              <div className="jobs-grid">
+                {filteredJobs.length === 0 ? (
+                  <div className="jobs-empty">
+                    <div className="jobs-empty-icon">🔍</div>
+                    <p className="jobs-empty-text">No jobs found matching your criteria.<br />Try clearing filters or posting a new job.</p>
+                  </div>
+                ) : (
+                  filteredJobs.map((job) => {
+                    const isOwner = job.userId === null || job.userId === currentUserId;
+                    return (
+                      <div className={`job-card ${isOwner ? "job-card--owned" : ""}`} key={job.id}>
+                        {isOwner && <span className="owner-badge">✦ Your Posting</span>}
+                        <div className="job-card-title">{job.title}</div>
+                        <div className="job-card-meta">
+                          <div className="meta-row"><span>🏢</span><span>{job.company}</span></div>
+                          <div className="meta-row"><span>📍</span><span>{job.location}</span></div>
+                          {job.description && (
+                            <div className="meta-row"><span>📝</span><span>{job.description}</span></div>
+                          )}
+                        </div>
+                        <div className="job-actions">
+                          {isOwner ? (
+                            <>
+                              <button className="btn-edit" onClick={() => handleEdit(job)}>✎ Edit</button>
+                              <button className="btn-delete" onClick={() => handleDelete(job.id)}>🗑 Delete</button>
+                              <button className="btn-applicants" onClick={() => handleViewApplicants(job)}>
+                                👥 Applicants
+                              </button>
+                            </>
+                          ) : (
+                            <button className="btn-apply" onClick={() => openApplyModal(job)}>
+                              🚀 Apply
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ══ TAB 2: MY POSTINGS ═════════════════════════════════════════════ */}
+          {activeTab === "my-jobs" && (
+            <>
+              <div className="jobs-header">
+                <h2 className="jobs-title">Jobs Posted By You</h2>
+                <span className="jobs-count">{myJobs.length} postings</span>
+              </div>
+
+              <div className="jobs-grid">
+                {myJobs.length === 0 ? (
+                  <div className="jobs-empty">
+                    <div className="jobs-empty-icon">📭</div>
+                    <p className="jobs-empty-text">You haven't posted any jobs yet.<br />Use the form on the left to post a job.</p>
+                  </div>
+                ) : (
+                  myJobs.map((job) => (
+                    <div className="job-card job-card--owned" key={job.id}>
+                      <span className="owner-badge">✦ Your Posting</span>
+                      <div className="job-card-title">{job.title}</div>
+                      <div className="job-card-meta">
+                        <div className="meta-row"><span>🏢</span><span>{job.company}</span></div>
+                        <div className="meta-row"><span>📍</span><span>{job.location}</span></div>
+                        {job.description && (
+                          <div className="meta-row"><span>📝</span><span>{job.description}</span></div>
+                        )}
+                      </div>
+                      <div className="job-actions">
+                        <button className="btn-edit" onClick={() => handleEdit(job)}>✎ Edit</button>
+                        <button className="btn-delete" onClick={() => handleDelete(job.id)}>🗑 Delete</button>
+                        <button className="btn-applicants" onClick={() => handleViewApplicants(job)}>
+                          👥 Applicants
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ══ TAB 3: MY APPLICATIONS ════════════════════════════════════════ */}
+          {activeTab === "my-applications" && (
+            <>
+              <div className="jobs-header">
+                <h2 className="jobs-title">My Submitted Applications</h2>
+                <span className="jobs-count">{userApplications.length} applications</span>
+              </div>
+
+              {applicationsLoading ? (
+                <div className="jobs-empty">Loading applications...</div>
+              ) : userApplications.length === 0 ? (
+                <div className="jobs-empty">
+                  <div className="jobs-empty-icon">📄</div>
+                  <p className="jobs-empty-text">You haven't applied for any jobs yet.<br />Browse "All Jobs" and click Apply!</p>
+                </div>
+              ) : (
+                <div className="jobs-grid">
+                  {userApplications.map((app) => {
+                    const targetJob = jobs.find(j => j.id === app.jobId);
+                    return (
+                      <div className="job-card" key={app.id}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div className="job-card-title">{targetJob ? targetJob.title : `Job #${app.jobId}`}</div>
+                          <span className="app-status-badge">Submitted</span>
+                        </div>
+                        <div className="job-card-meta" style={{ marginTop: "10px" }}>
+                          {targetJob && <div className="meta-row"><span>🏢</span><span>{targetJob.company}</span></div>}
+                          {targetJob && <div className="meta-row"><span>📍</span><span>{targetJob.location}</span></div>}
+                          <div className="meta-row"><span>🕒</span><span>Applied: {new Date(app.appliedAt).toLocaleString()}</span></div>
+                          {app.message && <div className="meta-row"><span>💬</span><span>"{app.message}"</span></div>}
+                        </div>
+                        <div className="job-actions" style={{ marginTop: "14px" }}>
+                          <a
+                            href={`${API_BASE}/uploads/${app.resumePath}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-applicants"
+                            style={{ textDecoration: "none", textAlign: "center" }}
+                          >
+                            📄 View Uploaded Resume
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
 
         </section>
       </div>
@@ -368,17 +537,17 @@ function Dashboard() {
 
             <div className="modal-info-row">
               <div className="modal-info-item">
-                <span className="modal-info-label">Your Name</span>
+                <span className="modal-info-label">Applicant Name</span>
                 <span className="modal-info-value">{currentUserName}</span>
               </div>
               <div className="modal-info-item">
-                <span className="modal-info-label">Your Email</span>
-                <span className="modal-info-value">{currentEmail || "Not set — update your profile"}</span>
+                <span className="modal-info-label">Applicant Email</span>
+                <span className="modal-info-value">{currentEmail || "Not set"}</span>
               </div>
             </div>
 
             <div className="fg" style={{ marginTop: "16px" }}>
-              <label>Cover Note <span style={{ color: "#3a4060", fontWeight: 400 }}>(optional)</span></label>
+              <label>Cover Note <span style={{ color: "#8892b0", fontWeight: 400 }}>(optional)</span></label>
               <textarea
                 placeholder="Write a short message to the recruiter..."
                 value={applyMessage}
@@ -388,10 +557,10 @@ function Dashboard() {
             </div>
 
             <div className="fg" style={{ marginTop: "10px" }}>
-              <label>Upload Resume (PDF)</label>
+              <label>Upload Resume (PDF only)</label>
               <input
                 type="file"
-                accept="application/pdf"
+                accept="application/pdf,.pdf"
                 onChange={(e) => setResumeFile(e.target.files[0])}
               />
             </div>
@@ -406,7 +575,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ══ APPLICANTS MODAL (owner view) ══════════════════════════════════════ */}
+      {/* ══ APPLICANTS MODAL (Employer View) ══════════════════════════════════ */}
       {viewApplicantsJob && (
         <div className="modal-overlay" onClick={() => setViewApplicantsJob(null)}>
           <div className="modal-box modal-box--wide" onClick={(e) => e.stopPropagation()}>
@@ -423,7 +592,7 @@ function Dashboard() {
             ) : applicants.length === 0 ? (
               <div className="applicants-empty">
                 <div style={{ fontSize: "2rem", marginBottom: "10px" }}>📭</div>
-                No one has applied yet.
+                No one has applied for this position yet.
               </div>
             ) : (
               <div className="applicants-list">
@@ -432,25 +601,22 @@ function Dashboard() {
                     <div className="applicant-avatar">{a.applicantName?.charAt(0).toUpperCase()}</div>
                     <div className="applicant-info">
                       <div className="applicant-name">{a.applicantName}</div>
-
                       <div className="applicant-email">
                         <a href={`mailto:${a.applicantEmail}`}>{a.applicantEmail}</a>
                       </div>
-
                       <div style={{ marginTop: "5px" }}>
                         <a
                           href={`${API_BASE}/uploads/${a.resumePath}`}
                           target="_blank"
                           rel="noreferrer"
+                          style={{ color: "#4f6ef7", textDecoration: "none", fontWeight: 600 }}
                         >
-                          📄 View Resume
+                          📄 View Resume PDF
                         </a>
                       </div>
-
                       {a.message && (
                         <div className="applicant-message">"{a.message}"</div>
                       )}
-
                       <div className="applicant-time">
                         Applied: {new Date(a.appliedAt).toLocaleString()}
                       </div>
